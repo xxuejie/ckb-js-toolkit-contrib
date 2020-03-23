@@ -1,0 +1,39 @@
+{
+  "name": "ckb-js-toolkit-contrib",
+  "version": "0.1.0",
+  "description": "Utilities built on top of ckb-js-toolkit",
+  "main": "dist/ckb-js-toolkit-contrib.node.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "npm run build && ava",
+    "fmt": "prettier --write \"{src,tests}/**/*.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xxuejie/ckb-js-toolkit-contrib.git"
+  },
+  "author": "Xuejie Xiao",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xxuejie/ckb-js-toolkit-contrib/issues"
+  },
+  "homepage": "https://github.com/xxuejie/ckb-js-toolkit-contrib#readme",
+  "dependencies": {
+    "ckb-js-toolkit": "^0.6.0"
+  },
+  "optionalDependencies": {
+    "nohm": "^2.2.3"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-json": "^4.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "ava": "^3.5.0",
+    "builtin-modules": "^3.1.0",
+    "prettier": "1.19.1",
+    "rollup": "^1.32.0"
+  }
+}
