@@ -1,4 +1,9 @@
-import { Reader, BigIntToHexString, validators } from "ckb-js-toolkit";
+import {
+  Reader,
+  BigIntToHexString,
+  HexStringToBigInt,
+  validators
+} from "ckb-js-toolkit";
 const { ValidateOutPoint, ValidateScript } = validators;
 import { Nohm, NohmModel } from "nohm";
 import JSBI from "jsbi";
@@ -7,6 +12,28 @@ import { ValidateCollectorCell, ValidateOutputCell } from "./utils";
 
 const MAXIMUM_KEPT_BYTES = 128;
 const MAXIMUM_KEPT_HEX_SIZE = MAXIMUM_KEPT_BYTES * 2 + 2;
+
+const KEY_LIVE_CELL = "LC";
+const KEY_OUT_POINT = "o";
+const KEY_CAPACITY = "c";
+const KEY_LOCK_HASH = "l";
+const KEY_LOCK_CODE_HASH = "lc";
+const KEY_LOCK_HASH_TYPE = "lh";
+const KEY_TYPE_HASH = "t";
+const KEY_TYPE_CODE_HASH = "tc";
+const KEY_TYPE_HASH_TYPE = "th";
+const KEY_DATA = "d";
+const KEY_DATA_LENGTH = "dl";
+const KEY_LOCK_ARGS = "la";
+const KEY_LOCK_ARGS_LENGTH = "ll";
+const KEY_TYPE_ARGS = "ta";
+const KEY_TYPE_ARGS_LENGTH = "tl";
+const KEY_BLOCK_HASH = "b";
+const KEY_BLOCK_NUMBER = "n";
+const KEY_SPENT = "s";
+
+// This is at least 11 epochs
+const OLD_CELLS_TO_PURGE = JSBI.BigInt(20000);
 
 function serializeOutPoint(outPoint) {
   if (outPoint instanceof Object) {
@@ -29,28 +56,28 @@ class LiveCellClass extends NohmModel {
     ValidateCollectorCell(cell, { requireData: true });
     this.cell = cell;
     this.setOutPoint(cell.out_point);
-    this.property("capacity", cell.cell_output.capacity);
+    this.property(KEY_CAPACITY, cell.cell_output.capacity);
     this.setLock(cell.cell_output.lock);
     if (cell.cell_output.type) {
       this.setType(cell.cell_output.type);
     }
     if (cell.data.length <= MAXIMUM_KEPT_HEX_SIZE) {
-      this.property("data", cell.data);
+      this.property(KEY_DATA, cell.data);
     }
-    this.property("data_length", cell.data.length);
+    this.property(KEY_DATA_LENGTH, cell.data.length);
   }
 
   outPoint() {
-    return deserializeOutPoint(this.property("out_point"));
+    return deserializeOutPoint(this.property(KEY_OUT_POINT));
   }
 
   setOutPoint(outPoint) {
-    this.property("out_point", serializeOutPoint(outPoint));
+    this.property(KEY_OUT_POINT, serializeOutPoint(outPoint));
     return this;
   }
 
   async lock(rpc = null) {
-    let args = this.property("lock_args");
+    let args = this.property(KEY_LOCK_ARGS);
     if (!args && !rpc) {
       throw new Error("RPC is needed to fetch lock args!");
     }
@@ -59,27 +86,27 @@ class LiveCellClass extends NohmModel {
       args = this.cell.lock.args;
     }
     return {
-      code_hash: this.property("lock_code_hash"),
-      hash_type: this.property("lock_hash_type"),
+      code_hash: this.property(KEY_LOCK_CODE_HASH),
+      hash_type: this.property(KEY_LOCK_HASH_TYPE),
       args
     };
   }
 
   setLock(lock) {
     ValidateScript(lock);
-    this.property("lock_code_hash", lock.code_hash);
-    this.property("lock_hash_type", lock.hash_type);
+    this.property(KEY_LOCK_CODE_HASH, lock.code_hash);
+    this.property(KEY_LOCK_HASH_TYPE, lock.hash_type);
     if (lock.args.length <= MAXIMUM_KEPT_HEX_SIZE) {
-      this.property("lock_args", lock.args);
+      this.property(KEY_LOCK_ARGS, lock.args);
     }
   }
 
   async type(rpc = null) {
-    const code_hash = this.property("type_code_hash");
+    const code_hash = this.property(KEY_TYPE_CODE_HASH);
     if (!code_hash) {
       return null;
     }
-    let args = this.property("type_args");
+    let args = this.property(KEY_TYPE_ARGS);
     if (!args && !rpc) {
       throw new Error("RPC is needed to fetch lock args!");
     }
@@ -89,22 +116,22 @@ class LiveCellClass extends NohmModel {
     }
     return {
       code_hash,
-      hash_type: this.property("type_hash_type"),
+      hash_type: this.property(KEY_TYPE_HASH_TYPE),
       args
     };
   }
 
   setType(type) {
     ValidateScript(type);
-    this.property("type_code_hash", type.code_hash);
-    this.property("type_hash_type", type.hash_type);
+    this.property(KEY_TYPE_CODE_HASH, type.code_hash);
+    this.property(KEY_TYPE_HASH_TYPE, type.hash_type);
     if (type.args.length <= MAXIMUM_KEPT_HEX_SIZE) {
-      this.property("type_args", type.args);
+      this.property(KEY_TYPE_ARGS, type.args);
     }
   }
 
   async data(rpc = null) {
-    let data = this.property("data");
+    let data = this.property(KEY_DATA);
     if (!data && !rpc) {
       throw new Error("RPC is needed to fetch data!");
     }
@@ -129,9 +156,9 @@ class LiveCellClass extends NohmModel {
   }
 }
 
-LiveCellClass.modelName = "LiveCell";
+LiveCellClass.modelName = KEY_LIVE_CELL;
 LiveCellClass.definitions = {
-  out_point: {
+  [KEY_OUT_POINT]: {
     type: "string",
     index: true,
     unique: true,
@@ -151,60 +178,66 @@ LiveCellClass.definitions = {
       }
     ]
   },
-  capacity: {
+  [KEY_CAPACITY]: {
     type: "string"
   },
-  lock_hash: {
+  [KEY_LOCK_HASH]: {
     type: "string",
     index: true
   },
-  lock_code_hash: {
+  [KEY_LOCK_CODE_HASH]: {
     type: "string",
     index: true
   },
-  lock_hash_type: {
+  [KEY_LOCK_HASH_TYPE]: {
     type: "string",
     index: true
   },
-  type_hash: {
+  [KEY_TYPE_HASH]: {
     type: "string",
     index: true
   },
-  type_code_hash: {
+  [KEY_TYPE_CODE_HASH]: {
     type: "string",
     index: true
   },
-  type_hash_type: {
+  [KEY_TYPE_HASH_TYPE]: {
     type: "string",
     index: true
   },
   // Only values that are less than 128 bytes are stored in the model fields
   // below. Longer values only have the length field here set, and requires
   // manual fetching from CKB.
-  data: {
+  [KEY_DATA]: {
     type: "string"
   },
-  data_length: {
+  [KEY_DATA_LENGTH]: {
     type: "integer"
   },
-  lock_args: {
+  [KEY_LOCK_ARGS]: {
     type: "string"
   },
-  lock_args_length: {
+  [KEY_LOCK_ARGS_LENGTH]: {
     type: "integer"
   },
-  type_args: {
+  [KEY_TYPE_ARGS]: {
     type: "string"
   },
-  type_args_length: {
+  [KEY_TYPE_ARGS_LENGTH]: {
     type: "integer"
   },
-  block_hash: {
-    type: "string"
+  [KEY_BLOCK_HASH]: {
+    type: "string",
+    index: true
   },
-  spent: {
+  [KEY_BLOCK_NUMBER]: {
+    type: "integer",
+    index: true
+  },
+  [KEY_SPENT]: {
     type: "boolean",
-    defaultValue: false
+    defaultValue: false,
+    index: true
   }
 };
 
@@ -215,10 +248,15 @@ function asyncSleep(ms = 1) {
 }
 
 export class Indexer {
-  constructor(rpc, redisClient, registerNohm = true) {
+  constructor(
+    rpc,
+    redisClient,
+    { registerNohm = true, purgeOldBlocks = OLD_CELLS_TO_PURGE } = {}
+  ) {
     this.rpc = rpc;
     this.redisClient = redisClient;
     this.registerNohm = registerNohm;
+    this.purgeOldBlocks = purgeOldBlocks;
   }
 
   start() {
@@ -245,6 +283,7 @@ export class Indexer {
   async loop() {
     const getAsync = promisify(this.redisClient.get).bind(this.redisClient);
     const setAsync = promisify(this.redisClient.set).bind(this.redisClient);
+    const delAsync = promisify(this.redisClient.del).bind(this.redisClient);
 
     let lastProcessedBlockNumber = JSBI.BigInt(
       (await getAsync("LAST_PROCESSED_NUMBER")) || "-1"
@@ -264,7 +303,45 @@ export class Indexer {
           `BLOCK:${BigIntToHexString(lastProcessedBlockNumber)}:HASH`
         );
         if (previousIndexedBlockHash !== block.header.parent_hash) {
-          throw new Error("TODO: handle fork!");
+          const lastUnpurgedBlockNumber = await getAsync(
+            "LAST_UNPURGED_BLOCK_NUMBER"
+          );
+          if (lastUnpurgedBlockNumber) {
+            if (
+              JSBI.lessThan(
+                lastProcessedBlockNumber,
+                HexStringToBigInt(lastUnpurgedBlockNumber)
+              )
+            ) {
+              throw new Error(
+                `The block ${previousIndexedBlockHash} to revert has already been purged!`
+              );
+            }
+          }
+          // To revert a block, all we need here is:
+          // * Locate all spent cells and unspent cells via previousIndexedBlockHash
+          // * Mark those spent as unspent, and delete those unspent cells.
+          // * Delete block hash field for previousIndexedBlockHash
+          // * Revise LAST_PROCESSED_NUMBER
+          const cells = await LiveCell.findAndLoad({
+            [KEY_BLOCK_HASH]: previousIndexedBlockHash
+          });
+          for (const cell of cells) {
+            if (cell.property(KEY_SPENT)) {
+              cell.property(KEY_SPENT, false);
+              await cell.save();
+            } else {
+              await cell.remove();
+            }
+          }
+          await delAsync(
+            `BLOCK:${BigIntToHexString(lastProcessedBlockNumber)}:HASH`
+          );
+          await setAsync(
+            "LAST_PROCESSED_NUMBER",
+            BigIntToHexString(JSBI.add(blockNumber, JSBI.BigInt(-1)))
+          );
+          continue;
         }
       }
 
@@ -274,7 +351,7 @@ export class Indexer {
       for (const transaction of block.transactions) {
         for (const input of transaction.inputs) {
           const ids = await LiveCell.find({
-            out_point: serializeOutPoint(input.previous_output)
+            [KEY_OUT_POINT]: serializeOutPoint(input.previous_output)
           });
           spentIds = spentIds.concat(ids);
         }
@@ -293,24 +370,28 @@ export class Indexer {
       }
 
       for (const cell of cells) {
-        const c = await Nohm.factory("LiveCell");
+        const c = await Nohm.factory(KEY_LIVE_CELL);
         const ids = await LiveCell.find({
-          out_point: serializeOutPoint(cell.out_point)
+          [KEY_OUT_POINT]: serializeOutPoint(cell.out_point)
         });
         if (ids.length > 0) {
           await c.load(ids[0]);
         }
         c.setCell(cell);
-        c.property("block_hash", block.header.hash);
+        c.property(KEY_BLOCK_HASH, block.header.hash);
+        // TODO: check if block number can be held in double
+        c.property(
+          KEY_BLOCK_NUMBER,
+          JSBI.toNumber(HexStringToBigInt(block.header.number))
+        );
         await c.save();
       }
       const spentCells = await LiveCell.loadMany(spentIds);
       for (const spentCell of spentCells) {
-        spentCell.spent = true;
+        spentCell.property(KEY_SPENT, true);
         await spentCell.save();
       }
 
-      // TODO: purge spent cells that are too old for a fork.
       await setAsync(
         `BLOCK:${BigIntToHexString(blockNumber)}:HASH`,
         block.header.hash
@@ -319,6 +400,33 @@ export class Indexer {
 
       console.log("Indexed block: ", blockNumber.toString());
       lastProcessedBlockNumber = blockNumber;
+
+      if (this.purgeOldBlocks) {
+        const blockToPurge = JSBI.subtract(blockNumber, this.purgeOldBlocks);
+        if (JSBI.toNumber(blockToPurge) % 1000 > 1) {
+          continue;
+        }
+        if (JSBI.greaterThanOrEqual(blockToPurge, JSBI.BigInt(0))) {
+          const blockHash = await getAsync(
+            `BLOCK:${BigIntToHexString(blockToPurge)}:HASH`
+          );
+          await setAsync(
+            "LAST_UNPURGED_BLOCK_NUMBER",
+            JSBI.add(blockToPurge, JSBI.BigInt(1))
+          );
+          const cells = await LiveCell.findAndLoad({
+            [KEY_SPENT]: true,
+            [KEY_BLOCK_NUMBER]: {
+              min: 0,
+              max: JSBI.toNumber(blockToPurge)
+            }
+          });
+          for (const cell of cells) {
+            await cell.remove();
+          }
+          await delAsync(`BLOCK:${BigIntToHexString(blockToPurge)}:HASH`);
+        }
+      }
     }
   }
 }
@@ -332,7 +440,7 @@ export class Collector {
     this.rpc = rpc;
     this.filters = Object.assign({}, this.filters);
     if (skipCellWithContent) {
-      this.filters.data_length = 0;
+      this.filters[KEY_DATA_LENGTH] = 0;
     }
     this.loadData = loadData;
   }
@@ -348,12 +456,12 @@ export class Collector {
       }
       yield {
         cell_output: {
-          capacity: cell.property("capacity"),
+          capacity: cell.property(KEY_CAPACITY),
           lock,
           type
         },
         out_point: cell.outPoint(),
-        block_hash: cell.property("block_hash"),
+        block_hash: cell.property(KEY_BLOCK_HASH),
         data
       };
     }
