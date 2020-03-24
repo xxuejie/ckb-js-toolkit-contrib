@@ -2,35 +2,39 @@ import {
   Reader,
   BigIntToHexString,
   HexStringToBigInt,
-  validators
+  validators,
+  normalizers
 } from "ckb-js-toolkit";
 const { ValidateOutPoint, ValidateScript } = validators;
+const { NormalizeScript } = normalizers;
 import { Nohm, NohmModel } from "nohm";
+import blake2b from "blake2b";
 import JSBI from "jsbi";
 import { promisify } from "util";
+import { SerializeScript } from "../blockchain";
 import { ValidateCollectorCell, ValidateOutputCell } from "./utils";
 
 const MAXIMUM_KEPT_BYTES = 128;
 const MAXIMUM_KEPT_HEX_SIZE = MAXIMUM_KEPT_BYTES * 2 + 2;
 
-const KEY_LIVE_CELL = "LC";
-const KEY_OUT_POINT = "o";
-const KEY_CAPACITY = "c";
-const KEY_LOCK_HASH = "l";
-const KEY_LOCK_CODE_HASH = "lc";
-const KEY_LOCK_HASH_TYPE = "lh";
-const KEY_TYPE_HASH = "t";
-const KEY_TYPE_CODE_HASH = "tc";
-const KEY_TYPE_HASH_TYPE = "th";
-const KEY_DATA = "d";
-const KEY_DATA_LENGTH = "dl";
-const KEY_LOCK_ARGS = "la";
-const KEY_LOCK_ARGS_LENGTH = "ll";
-const KEY_TYPE_ARGS = "ta";
-const KEY_TYPE_ARGS_LENGTH = "tl";
-const KEY_BLOCK_HASH = "b";
-const KEY_BLOCK_NUMBER = "n";
-const KEY_SPENT = "s";
+export const KEY_LIVE_CELL = "LC";
+export const KEY_OUT_POINT = "o";
+export const KEY_CAPACITY = "c";
+export const KEY_LOCK_HASH = "l";
+export const KEY_LOCK_CODE_HASH = "lc";
+export const KEY_LOCK_HASH_TYPE = "lh";
+export const KEY_TYPE_HASH = "t";
+export const KEY_TYPE_CODE_HASH = "tc";
+export const KEY_TYPE_HASH_TYPE = "th";
+export const KEY_DATA = "d";
+export const KEY_DATA_LENGTH = "dl";
+export const KEY_LOCK_ARGS = "la";
+export const KEY_LOCK_ARGS_LENGTH = "ll";
+export const KEY_TYPE_ARGS = "ta";
+export const KEY_TYPE_ARGS_LENGTH = "tl";
+export const KEY_BLOCK_HASH = "b";
+export const KEY_BLOCK_NUMBER = "n";
+export const KEY_SPENT = "s";
 
 // This is at least 11 epochs
 const OLD_CELLS_TO_PURGE = JSBI.BigInt(20000);
@@ -49,6 +53,20 @@ function deserializeOutPoint(serializedOutPoint) {
     tx_hash: serializedOutPoint.substring(0, 66),
     index: serializedOutPoint.substring(66)
   };
+}
+
+export function calculateScriptHash(validatedScript) {
+  const h = blake2b(
+    32,
+    null,
+    null,
+    new Uint8Array(Reader.fromRawString("ckb-default-hash").toArrayBuffer())
+  );
+  const data = SerializeScript(NormalizeScript(validatedScript));
+  h.update(new Uint8Array(data));
+  const out = new Uint8Array(32);
+  h.digest(out);
+  return new Reader(out.buffer).serializeJson();
 }
 
 class LiveCellClass extends NohmModel {
@@ -96,9 +114,11 @@ class LiveCellClass extends NohmModel {
     ValidateScript(lock);
     this.property(KEY_LOCK_CODE_HASH, lock.code_hash);
     this.property(KEY_LOCK_HASH_TYPE, lock.hash_type);
+    this.property(KEY_LOCK_ARGS_LENGTH, lock.args.length);
     if (lock.args.length <= MAXIMUM_KEPT_HEX_SIZE) {
       this.property(KEY_LOCK_ARGS, lock.args);
     }
+    this.property(KEY_LOCK_HASH, calculateScriptHash(lock));
   }
 
   async type(rpc = null) {
@@ -125,9 +145,11 @@ class LiveCellClass extends NohmModel {
     ValidateScript(type);
     this.property(KEY_TYPE_CODE_HASH, type.code_hash);
     this.property(KEY_TYPE_HASH_TYPE, type.hash_type);
+    this.property(KEY_TYPE_ARGS_LENGTH, type.args.length);
     if (type.args.length <= MAXIMUM_KEPT_HEX_SIZE) {
       this.property(KEY_TYPE_ARGS, type.args);
     }
+    this.property(KEY_TYPE_HASH, calculateScriptHash(type));
   }
 
   async data(rpc = null) {
@@ -215,13 +237,15 @@ LiveCellClass.definitions = {
     type: "integer"
   },
   [KEY_LOCK_ARGS]: {
-    type: "string"
+    type: "string",
+    index: true
   },
   [KEY_LOCK_ARGS_LENGTH]: {
     type: "integer"
   },
   [KEY_TYPE_ARGS]: {
-    type: "string"
+    type: "string",
+    index: true
   },
   [KEY_TYPE_ARGS_LENGTH]: {
     type: "integer"
@@ -438,7 +462,7 @@ export class Collector {
     { skipCellWithContent = true, loadData = false } = {}
   ) {
     this.rpc = rpc;
-    this.filters = Object.assign({}, this.filters);
+    this.filters = Object.assign({}, filters);
     if (skipCellWithContent) {
       this.filters[KEY_DATA_LENGTH] = 0;
     }
@@ -446,13 +470,15 @@ export class Collector {
   }
 
   async *collect() {
+    console.log("RUnning collection, filters: ", this.filters);
     const cells = await LiveCell.findAndLoad(this.filters);
-    for (const cell of cell) {
-      const lock = await cell.lock(rpc);
-      const type = await cell.type(rpc);
+    console.log("Looping cells");
+    for (const cell of cells) {
+      const lock = await cell.lock(this.rpc);
+      const type = await cell.type(this.rpc);
       let data = null;
       if (this.loadData) {
-        data = await cell.data(rpc);
+        data = await cell.data(this.rpc);
       }
       yield {
         cell_output: {

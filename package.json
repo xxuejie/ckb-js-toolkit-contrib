@@ -9,7 +9,8 @@
   "scripts": {
     "build": "rollup -c",
     "test": "npm run build && ava",
-    "fmt": "prettier --write \"{src,tests}/**/*.js\""
+    "fmt": "prettier --write \"{src,tests}/**/*.js\"",
+    "update-schema-file": "curl -L https://raw.githubusercontent.com/nervosnetwork/ckb/27c36a55e6358fd04153ec3da4638b6e10660da6/util/types/schemas/blockchain.mol -o blockchain.mol && moleculec --language - --schema-file blockchain.mol --format json > blockchain.json && moleculec-es -inputFile blockchain.json -outputFile src/blockchain.js && rm blockchain.mol blockchain.json"
   },
   "repository": {
     "type": "git",
@@ -25,6 +26,7 @@
     "ckb-js-toolkit": "^0.6.0"
   },
   "optionalDependencies": {
+    "blake2b": "^2.1.3",
     "nohm": "^2.2.3",
     "redis": "^3.0.2"
   },

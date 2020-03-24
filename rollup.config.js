@@ -18,6 +18,6 @@ module.exports = [
       commonjs(),
       json()
     ],
-    external: builtins.concat(["ckb-js-toolkit", "nohm"])
+    external: builtins.concat(["ckb-js-toolkit", "nohm", "blake2b"])
   }
 ];
