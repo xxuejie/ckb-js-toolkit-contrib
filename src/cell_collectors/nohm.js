@@ -463,6 +463,7 @@ export class Collector {
   ) {
     this.rpc = rpc;
     this.filters = Object.assign({}, filters);
+    this.filters[KEY_SPENT] = false;
     if (skipCellWithContent) {
       this.filters[KEY_DATA_LENGTH] = 0;
     }
