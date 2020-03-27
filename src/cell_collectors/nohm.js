@@ -39,7 +39,7 @@ export const KEY_SPENT = "s";
 // This is at least 11 epochs
 const OLD_CELLS_TO_PURGE = JSBI.BigInt(20000);
 
-function serializeOutPoint(outPoint) {
+export function serializeOutPoint(outPoint) {
   if (outPoint instanceof Object) {
     ValidateOutPoint(outPoint);
     return outPoint.tx_hash + outPoint.index;
