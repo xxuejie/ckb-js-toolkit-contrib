@@ -469,9 +469,6 @@ export class Collector {
     this.filters = Object.assign({}, filters);
     this.filters[KEY_SPENT] = false;
     this.skipCellWithContent = skipCellWithContent;
-    if (skipCellWithContent) {
-      this.filters[KEY_DATA_LENGTH] = "0";
-    }
     this.loadData = loadData;
   }
 
@@ -481,7 +478,7 @@ export class Collector {
       const lock = await cell.lock(this.rpc);
       const type = await cell.type(this.rpc);
       let data = null;
-      if (this.loadData) {
+      if (this.loadData || this.skipCellWithContent) {
         data = await cell.data(this.rpc);
       }
       // TODO: investigate later why filter does not work.
