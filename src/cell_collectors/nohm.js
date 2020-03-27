@@ -470,9 +470,7 @@ export class Collector {
   }
 
   async *collect() {
-    console.log("RUnning collection, filters: ", this.filters);
     const cells = await LiveCell.findAndLoad(this.filters);
-    console.log("Looping cells");
     for (const cell of cells) {
       const lock = await cell.lock(this.rpc);
       const type = await cell.type(this.rpc);
