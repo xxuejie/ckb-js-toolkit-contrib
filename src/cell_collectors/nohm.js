@@ -79,10 +79,11 @@ class LiveCellClass extends NohmModel {
     if (cell.cell_output.type) {
       this.setType(cell.cell_output.type);
     }
-    if (cell.data.length <= MAXIMUM_KEPT_HEX_SIZE) {
+    const dataLength = new Reader(cell.data).length();
+    if (dataLength <= MAXIMUM_KEPT_HEX_SIZE) {
       this.property(KEY_DATA, cell.data);
     }
-    this.property(KEY_DATA_LENGTH, cell.data.length);
+    this.property(KEY_DATA_LENGTH, dataLength);
   }
 
   outPoint() {
@@ -114,8 +115,9 @@ class LiveCellClass extends NohmModel {
     ValidateScript(lock);
     this.property(KEY_LOCK_CODE_HASH, lock.code_hash);
     this.property(KEY_LOCK_HASH_TYPE, lock.hash_type);
-    this.property(KEY_LOCK_ARGS_LENGTH, lock.args.length);
-    if (lock.args.length <= MAXIMUM_KEPT_HEX_SIZE) {
+    const length = new Reader(lock.args).length();
+    this.property(KEY_LOCK_ARGS_LENGTH, length);
+    if (length <= MAXIMUM_KEPT_HEX_SIZE) {
       this.property(KEY_LOCK_ARGS, lock.args);
     }
     this.property(KEY_LOCK_HASH, calculateScriptHash(lock));
@@ -145,8 +147,9 @@ class LiveCellClass extends NohmModel {
     ValidateScript(type);
     this.property(KEY_TYPE_CODE_HASH, type.code_hash);
     this.property(KEY_TYPE_HASH_TYPE, type.hash_type);
-    this.property(KEY_TYPE_ARGS_LENGTH, type.args.length);
-    if (type.args.length <= MAXIMUM_KEPT_HEX_SIZE) {
+    const length = new Reader(type.args).length();
+    this.property(KEY_LOCK_ARGS_LENGTH, length);
+    if (length <= MAXIMUM_KEPT_HEX_SIZE) {
       this.property(KEY_TYPE_ARGS, type.args);
     }
     this.property(KEY_TYPE_HASH, calculateScriptHash(type));
@@ -465,8 +468,9 @@ export class Collector {
     this.rpc = rpc;
     this.filters = Object.assign({}, filters);
     this.filters[KEY_SPENT] = false;
+    this.skipCellWithContent = skipCellWithContent;
     if (skipCellWithContent) {
-      this.filters[KEY_DATA_LENGTH] = 0;
+      this.filters[KEY_DATA_LENGTH] = "0";
     }
     this.loadData = loadData;
   }
@@ -479,6 +483,12 @@ export class Collector {
       let data = null;
       if (this.loadData) {
         data = await cell.data(this.rpc);
+      }
+      // TODO: investigate later why filter does not work.
+      if (this.skipCellWithContent) {
+        if (data && new Reader(data).length() > 0) {
+          continue;
+        }
       }
       yield {
         cell_output: {
