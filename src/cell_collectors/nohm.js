@@ -275,12 +275,13 @@ export class Indexer {
   constructor(
     rpc,
     redisClient,
-    { registerNohm = true, purgeOldBlocks = OLD_CELLS_TO_PURGE } = {}
+    { registerNohm = true, purgeOldBlocks = OLD_CELLS_TO_PURGE, log = console.log } = {}
   ) {
     this.rpc = rpc;
     this.redisClient = redisClient;
     this.registerNohm = registerNohm;
     this.purgeOldBlocks = purgeOldBlocks;
+    this.log = log;
   }
 
   start() {
@@ -422,7 +423,7 @@ export class Indexer {
       );
       await setAsync("LAST_PROCESSED_NUMBER", BigIntToHexString(blockNumber));
 
-      console.log("Indexed block: ", blockNumber.toString());
+      this.log("Indexed block: ", blockNumber.toString());
       lastProcessedBlockNumber = blockNumber;
 
       if (this.purgeOldBlocks) {
