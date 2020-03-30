@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "fmt": "prettier --write \"{src,tests}/**/*.js\"",
-    "update-schema-file": "curl -L https://raw.githubusercontent.com/nervosnetwork/ckb/27c36a55e6358fd04153ec3da4638b6e10660da6/util/types/schemas/blockchain.mol -o blockchain.mol && moleculec --language - --schema-file blockchain.mol --format json > blockchain.json && moleculec-es -inputFile blockchain.json -outputFile src/blockchain.js && rm blockchain.mol blockchain.json"
+    "update-schema-file": "curl -L https://raw.githubusercontent.com/nervosnetwork/ckb/27c36a55e6358fd04153ec3da4638b6e10660da6/util/types/schemas/blockchain.mol -o blockchain.mol && moleculec --language - --schema-file blockchain.mol --format json > blockchain.json && moleculec-es -inputFile blockchain.json -outputFile src/blockchain.js -generateTypeScriptDefinition && rm blockchain.mol blockchain.json"
   },
   "repository": {
     "type": "git",

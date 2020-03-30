@@ -78,6 +78,7 @@ function serializeTable(buffers) {
   }
   return buffer;
 }
+
 export class Uint32 {
   constructor(reader, { validate = true } = {}) {
     this.view = new DataView(assertArrayBuffer(reader));
@@ -745,11 +746,11 @@ export class OutPoint {
   }
 
   getTxHash() {
-    return new Byte32(this.view.buffer.slice(0, Byte32.size()), { validate: false });
+    return new Byte32(this.view.buffer.slice(0, 0 + Byte32.size()), { validate: false });
   }
 
   getIndex() {
-    return new Uint32(this.view.buffer.slice(0 + Byte32.size(), Uint32.size()), { validate: false });
+    return new Uint32(this.view.buffer.slice(0 + Byte32.size(), 0 + Byte32.size() + Uint32.size()), { validate: false });
   }
 
   validate(compatible = false) {
@@ -779,11 +780,11 @@ export class CellInput {
   }
 
   getSince() {
-    return new Uint64(this.view.buffer.slice(0, Uint64.size()), { validate: false });
+    return new Uint64(this.view.buffer.slice(0, 0 + Uint64.size()), { validate: false });
   }
 
   getPreviousOutput() {
-    return new OutPoint(this.view.buffer.slice(0 + Uint64.size(), OutPoint.size()), { validate: false });
+    return new OutPoint(this.view.buffer.slice(0 + Uint64.size(), 0 + Uint64.size() + OutPoint.size()), { validate: false });
   }
 
   validate(compatible = false) {
@@ -858,7 +859,7 @@ export class CellDep {
   }
 
   getOutPoint() {
-    return new OutPoint(this.view.buffer.slice(0, OutPoint.size()), { validate: false });
+    return new OutPoint(this.view.buffer.slice(0, 0 + OutPoint.size()), { validate: false });
   }
 
   getDepType() {
@@ -999,43 +1000,43 @@ export class RawHeader {
   }
 
   getVersion() {
-    return new Uint32(this.view.buffer.slice(0, Uint32.size()), { validate: false });
+    return new Uint32(this.view.buffer.slice(0, 0 + Uint32.size()), { validate: false });
   }
 
   getCompactTarget() {
-    return new Uint32(this.view.buffer.slice(0 + Uint32.size(), Uint32.size()), { validate: false });
+    return new Uint32(this.view.buffer.slice(0 + Uint32.size(), 0 + Uint32.size() + Uint32.size()), { validate: false });
   }
 
   getTimestamp() {
-    return new Uint64(this.view.buffer.slice(0 + Uint32.size() + Uint32.size(), Uint64.size()), { validate: false });
+    return new Uint64(this.view.buffer.slice(0 + Uint32.size() + Uint32.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size()), { validate: false });
   }
 
   getNumber() {
-    return new Uint64(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size(), Uint64.size()), { validate: false });
+    return new Uint64(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size()), { validate: false });
   }
 
   getEpoch() {
-    return new Uint64(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size(), Uint64.size()), { validate: false });
+    return new Uint64(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size()), { validate: false });
   }
 
   getParentHash() {
-    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size(), Byte32.size()), { validate: false });
+    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size()), { validate: false });
   }
 
   getTransactionsRoot() {
-    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size(), Byte32.size()), { validate: false });
+    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size()), { validate: false });
   }
 
   getProposalsHash() {
-    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size(), Byte32.size()), { validate: false });
+    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size() + Byte32.size()), { validate: false });
   }
 
   getUnclesHash() {
-    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size() + Byte32.size(), Byte32.size()), { validate: false });
+    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size() + Byte32.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size() + Byte32.size() + Byte32.size()), { validate: false });
   }
 
   getDao() {
-    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size() + Byte32.size() + Byte32.size(), Byte32.size()), { validate: false });
+    return new Byte32(this.view.buffer.slice(0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size() + Byte32.size() + Byte32.size(), 0 + Uint32.size() + Uint32.size() + Uint64.size() + Uint64.size() + Uint64.size() + Byte32.size() + Byte32.size() + Byte32.size() + Byte32.size() + Byte32.size()), { validate: false });
   }
 
   validate(compatible = false) {
@@ -1081,11 +1082,11 @@ export class Header {
   }
 
   getRaw() {
-    return new RawHeader(this.view.buffer.slice(0, RawHeader.size()), { validate: false });
+    return new RawHeader(this.view.buffer.slice(0, 0 + RawHeader.size()), { validate: false });
   }
 
   getNonce() {
-    return new Uint128(this.view.buffer.slice(0 + RawHeader.size(), Uint128.size()), { validate: false });
+    return new Uint128(this.view.buffer.slice(0 + RawHeader.size(), 0 + RawHeader.size() + Uint128.size()), { validate: false });
   }
 
   validate(compatible = false) {
