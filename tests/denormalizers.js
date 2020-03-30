@@ -15,4 +15,4 @@ test("denormalize script", t => {
   const data = blockchain.SerializeScript(normalizers.NormalizeScript(script));
   const script2 = denormalizers.DenormalizeScript(new blockchain.Script(data));
   t.deepEqual(script, script2);
-})
+});

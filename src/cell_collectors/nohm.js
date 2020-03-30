@@ -278,7 +278,11 @@ export class Indexer {
   constructor(
     rpc,
     redisClient,
-    { registerNohm = true, purgeOldBlocks = OLD_CELLS_TO_PURGE, log = console.log } = {}
+    {
+      registerNohm = true,
+      purgeOldBlocks = OLD_CELLS_TO_PURGE,
+      log = console.log
+    } = {}
   ) {
     this.rpc = rpc;
     this.redisClient = redisClient;
