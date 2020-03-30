@@ -1,0 +1,19 @@
+language: node_js
+node_js:
+  - "12"
+os: linux
+dist: bionic
+
+before_script:
+  - npm install
+
+matrix:
+  include:
+    - name: build
+      script:
+        - npm run test
+        - git diff --exit-code
+    - name: fmt
+      script:
+        - npm run fmt
+        - git diff --exit-code
