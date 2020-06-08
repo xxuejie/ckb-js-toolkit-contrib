@@ -6,7 +6,7 @@ function validateHexString(debugPath, string, length = 0) {
     throw new Error(`${debugPath} must be a hex string!`);
   }
   if (length > 0 && string.length != length) {
-    throw new Error(`${debugPath} must be ${lenght} bytes long!`);
+    throw new Error(`${debugPath} must be ${length} bytes long!`);
   }
 }
 
